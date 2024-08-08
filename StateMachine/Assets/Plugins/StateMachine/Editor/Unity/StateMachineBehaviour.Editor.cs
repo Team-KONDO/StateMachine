@@ -161,6 +161,20 @@ namespace KONDO.StateMachine.Unity
 				};
 			}
 
+			var defaultAssemblyName = "Assembly-CSharp";
+
+			// AssemblyÇì«Ç›çûÇﬁ
+			var defaultAssembly = Assembly.Load(defaultAssemblyName);
+
+			if (defaultAssembly != null)
+			{
+				// ì«Ç›çûÇÒÇæAssemblyÇ©ÇÁMainStateÇåpè≥ÇµÇƒÇ¢ÇÈÉNÉâÉXÇæÇØÇíäèo
+				foreach (var mainState in defaultAssembly.GetTypes().Where(x => x.IsSubclassOf(typeof(MainStateBase))))
+				{
+					states.TryAdd(mainState, defaultAssemblyName);
+				};
+			}
+
 			return states;
 		}
 
@@ -170,6 +184,12 @@ namespace KONDO.StateMachine.Unity
 		/// </summary>
 		private void SelectAvailableMainState(Dictionary<Type, string> states)
 		{
+			if (states.Count == 0)
+			{
+				EditorGUILayout.LabelField("Not Found MainState Sub Class");
+				return;
+			}
+
 			EditorGUILayout.LabelField("States");
 
 			EditorGUILayout.BeginVertical("Box");
@@ -224,6 +244,11 @@ namespace KONDO.StateMachine.Unity
 		/// </summary>
 		private void SelectStartState(Dictionary<Type, string> states)
 		{
+			if (states.Count == 0)
+			{
+				return;
+			}
+
 			var stateNames = states.Select(x => x.Key.FullName).ToArray();
 
 			// ï AssemblyÇ©ÇÁÇ≈Ç‡ì«Ç›çûÇﬂÇÈÇÊÇ§Ç…AssemblyñºÇ‡ä‹ÇﬂÇÈ
