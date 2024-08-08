@@ -1,0 +1,11 @@
+{
+	"name": "com.kondo.statemachi",
+	"displayName": "KONDO.StateMachine",
+	"version": "0.1.0",
+	"unity": "2018.4",
+	"license": "MIT",
+	"dependencies": {
+		"com.cysharp.r3": "1.2.4",
+		"org.nuget.r3": "1.2.4"
+	}
+}

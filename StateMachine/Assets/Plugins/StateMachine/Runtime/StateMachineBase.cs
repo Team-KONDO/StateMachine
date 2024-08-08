@@ -1,0 +1,137 @@
+using System;
+using System.Collections.Generic;
+
+namespace KONDO.StateMachine
+{
+	/// <summary>
+	/// StateMachineBase
+	/// StateMachineのベースクラス
+	/// </summary>
+	public abstract class StateMachineBase<T> where T : new()
+	{
+		// StateのOwner
+		public T Owner => _stateOwner;
+
+		// 現在のステート
+		public StateBase<T> CurrentState => _currentState;
+
+		// 遷移できるステート
+		private Dictionary<Type, StateBase<T>> _states = new();
+
+		// 現在のステート
+		private StateBase<T> _currentState;
+
+		// StateのOwner
+		private T _stateOwner;
+
+		// ----- Constructor -----
+		public StateMachineBase()
+		{
+			_stateOwner = new T();
+		}
+
+
+		// ----- Constructor -----
+		public StateMachineBase(T owner)
+		{
+			_stateOwner = owner ?? new T();
+		}
+
+		/// <summary>
+		/// Update
+		/// 更新処理
+		/// </summary>
+		public void Update(float deltaTime)
+		{
+			_currentState.OnUpdateInternal(this, deltaTime);
+		}
+
+		/// <summary>
+		/// StartState
+		/// Stateの開始
+		/// </summary>
+		public void StartState<TState>() where TState : StateBase<T>
+		{
+			if (_states.TryGetValue(typeof(TState), out var newState))
+			{
+				_currentState = newState;
+				_currentState.OnStartInternal(this);
+			}
+		}
+
+		/// <summary>
+		/// StartState
+		/// Stateの開始
+		/// </summary>
+		public void StartState(Type stateType)
+		{
+			if (_states.TryGetValue(stateType, out var newState))
+			{
+				_currentState = newState;
+				_currentState.OnStartInternal(this);
+			}
+		}
+
+		/// <summary>
+		/// StartState
+		/// Stateの開始
+		/// </summary>
+		public void EndState()
+		{
+			_currentState.OnEndInternal(this);
+
+			foreach (var state in _states)
+			{
+				state.Value.OnDestroyInternal(this);
+			}
+
+			_states.Clear();
+		}
+
+		/// <summary>
+		/// AddState
+		/// Stateの追加
+		/// </summary>
+		public void AddState(StateBase<T> state)
+		{
+			if (_states.TryAdd(state.GetType(), state))
+			{
+				// 追加出来たら初期化
+				state.OnInitializeInternal(this);
+			}
+		}
+
+		/// <summary>
+		/// AddState
+		/// Stateの追加
+		/// </summary>
+		public void AddStates(IEnumerable<StateBase<T>> states)
+		{
+			foreach (var state in states)
+			{
+				if (_states.TryAdd(state.GetType(), state))
+				{
+					// 追加出来たら初期化
+					state.OnInitializeInternal(this);
+				}
+			}
+		}
+
+		/// <summary>
+		/// ChangeState
+		/// Stateの変更
+		/// </summary>
+		internal void ChangeState<TState>() where TState : StateBase<T>
+		{
+			// 先に現在のStateを終了させる
+			_currentState.OnEndInternal(this);
+
+			if (_states.TryGetValue(typeof(TState), out var newState))
+			{
+				// Stateが見つかれば開始する
+				_currentState = newState;
+				_currentState.OnStartInternal(this);
+			}
+		}
+	}
+}
