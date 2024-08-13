@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using R3;
 using System.Threading;
 
@@ -15,6 +16,8 @@ namespace KONDO.StateMachine
 		// State内でのみ有効なCancellationTokenSource
 		private CancellationTokenSource _stateCancellationTokenSource = new CancellationTokenSource();
 
+		private bool _started = false;
+
 		// 経過時間
 		public float ElapsedTime { get; private set; }
 
@@ -22,13 +25,13 @@ namespace KONDO.StateMachine
 		/// OnInitialize
 		/// 初期化時
 		/// </summary>
-		public virtual void OnInitialize(StateMachineBase<T> stateMachine) { }
+		public virtual async UniTask OnInitializeAsync(StateMachineBase<T> stateMachine) { }
 
 		/// <summary>
 		/// OnStart
 		/// 開始時
 		/// </summary>
-		public virtual void OnStart(StateMachineBase<T> stateMachine) { }
+		public virtual async UniTask OnStartAsync(StateMachineBase<T> stateMachine) { }
 
 		/// <summary>
 		/// OnUpdate
@@ -40,31 +43,31 @@ namespace KONDO.StateMachine
 		/// OnEnd
 		/// 終了時
 		/// </summary>
-		public virtual void OnEnd(StateMachineBase<T> stateMachine) { }
+		public virtual async UniTask OnEndAsync(StateMachineBase<T> stateMachine) { }
 
 		/// <summary>
 		/// OnDestroy
 		/// 破棄時
 		/// </summary>
-		public virtual void OnDestroy(StateMachineBase<T> stateMachine) { }
+		public virtual async UniTask OnDestroyAsync(StateMachineBase<T> stateMachine) { }
 
 		/// <summary>
 		/// OnInitializeInternal
 		/// 内部用初期化処理
 		/// </summary>
-		internal virtual void OnInitializeInternal(StateMachineBase<T> stateMachine)
+		internal virtual async UniTask OnInitializeInternalAsync(StateMachineBase<T> stateMachine)
 		{
 			// 先にこのクラスの初期化をする
 
 			// 継承先の初期化は最後
-			OnInitialize(stateMachine);
+			await OnInitializeAsync(stateMachine);
 		}
 
 		/// <summary>
 		/// OnStartInternal
 		/// 内部用開始処理
 		/// </summary>
-		internal virtual void OnStartInternal(StateMachineBase<T> stateMachine)
+		internal virtual async UniTask OnStartInternalAsync(StateMachineBase<T> stateMachine)
 		{
 			// 使用する可能性があるので先に生成
 			_stateCancellationTokenSource = new CancellationTokenSource();
@@ -72,7 +75,9 @@ namespace KONDO.StateMachine
 			// 経過時間をリセット
 			ElapsedTime = 0.0f;
 
-			OnStart(stateMachine);
+			await OnStartAsync(stateMachine);
+
+			_started = true;
 		}
 
 		/// <summary>
@@ -81,6 +86,11 @@ namespace KONDO.StateMachine
 		/// </summary>
 		internal virtual void OnUpdateInternal(StateMachineBase<T> stateMachine, float deltaTime)
 		{
+			if (!_started)
+			{
+				return;
+			}
+
 			// 経過時間の更新
 			ElapsedTime += deltaTime;
 
@@ -91,10 +101,10 @@ namespace KONDO.StateMachine
 		/// OnEndInternal
 		/// 内部用終了処理
 		/// </summary>
-		internal virtual void OnEndInternal(StateMachineBase<T> stateMachine)
+		internal virtual async UniTask OnEndInternalAsync(StateMachineBase<T> stateMachine)
 		{
 			// 終了処理は継承先から
-			OnEnd(stateMachine);
+			await OnEndAsync(stateMachine);
 
 			// 使いまわせるようにClear
 			_stateDisposable.Clear();
@@ -102,16 +112,18 @@ namespace KONDO.StateMachine
 			// キャンセルして破棄する
 			_stateCancellationTokenSource.Cancel();
 			_stateCancellationTokenSource = null;
+
+			_started = false;
 		}
 
 		/// <summary>
 		/// OnDestroyInternal
 		/// 内部用破棄処理
 		/// </summary>
-		internal virtual void OnDestroyInternal(StateMachineBase<T> stateMachine)
+		internal virtual async UniTask OnDestroyInternalAsync(StateMachineBase<T> stateMachine)
 		{
 			// 破棄処理も継承先から
-			OnDestroy(stateMachine);
+			await OnDestroyAsync(stateMachine);
 
 			// Disposeする
 			_stateDisposable.Dispose();
@@ -122,9 +134,9 @@ namespace KONDO.StateMachine
 		/// ChangeState
 		/// Stateの変更
 		/// </summary>
-		protected void ChangeState<TState>(StateMachineBase<T> stateMachine) where TState : StateBase<T>
+		protected async UniTask ChangeStateAsync<TState>(StateMachineBase<T> stateMachine) where TState : StateBase<T>
 		{
-			stateMachine.ChangeState<TState>();
+			await stateMachine.ChangeStateAsync<TState>();
 		}
 	}
 }

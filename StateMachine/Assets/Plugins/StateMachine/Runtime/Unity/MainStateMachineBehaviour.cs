@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -39,16 +40,16 @@ namespace KONDO.StateMachine.Unity
 		/// <summary>
 		/// Awake
 		/// </summary>
-		private void Awake()
+		private async void Awake()
 		{
 			// StatMachine‚Ìì¬
 			MainStateMachine = new MainStateMachine(this);
 
 			// MainState‚ğ‰Šú‰»
-			InitializeMainState();
+			await InitializeMainStateAsync();
 
 			// State‚ÌŠJn
-			MainStateMachine.StartState(Type.GetType(_firstMainStateName));
+			await MainStateMachine.StartStateAsync(Type.GetType(_firstMainStateName));
 		}
 
 		/// <summary>
@@ -65,11 +66,11 @@ namespace KONDO.StateMachine.Unity
 		/// <summary>
 		/// OnDestroy
 		/// </summary>
-		private void OnDestroy()
+		private async void OnDestroy()
 		{
 			if (MainStateMachine != null)
 			{
-				MainStateMachine.EndState();
+				await MainStateMachine.EndStateAsync();
 			}
 		}
 
@@ -77,7 +78,7 @@ namespace KONDO.StateMachine.Unity
 		/// InitializeMainState
 		/// MainState‚Ì‰Šú‰»
 		/// </summary>
-		private void InitializeMainState()
+		private async UniTask InitializeMainStateAsync()
 		{
 			_mainStates.Clear();
 
@@ -88,7 +89,7 @@ namespace KONDO.StateMachine.Unity
 				_mainStates.Add(state);
 			}
 
-			MainStateMachine.AddStates(_mainStates);
+			await MainStateMachine.AddStatesAsync(_mainStates);
 		}
 	}
 }

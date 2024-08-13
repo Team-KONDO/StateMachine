@@ -1,7 +1,9 @@
 {
     "name": "KONDO.StateMachine",
     "rootNamespace": "KONDO.StateMachine",
-    "references": [],
+    "references": [
+        "UniTask"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

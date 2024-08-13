@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 
@@ -50,12 +51,12 @@ namespace KONDO.StateMachine
 		/// StartState
 		/// Stateの開始
 		/// </summary>
-		public void StartState<TState>() where TState : StateBase<T>
+		public async UniTask StartStateAsync<TState>() where TState : StateBase<T>
 		{
 			if (_states.TryGetValue(typeof(TState), out var newState))
 			{
 				_currentState = newState;
-				_currentState.OnStartInternal(this);
+				await _currentState.OnStartInternalAsync(this);
 			}
 		}
 
@@ -63,12 +64,12 @@ namespace KONDO.StateMachine
 		/// StartState
 		/// Stateの開始
 		/// </summary>
-		public void StartState(Type stateType)
+		public async UniTask StartStateAsync(Type stateType)
 		{
 			if (_states.TryGetValue(stateType, out var newState))
 			{
 				_currentState = newState;
-				_currentState.OnStartInternal(this);
+				await _currentState.OnStartInternalAsync(this);
 			}
 		}
 
@@ -76,13 +77,13 @@ namespace KONDO.StateMachine
 		/// StartState
 		/// Stateの開始
 		/// </summary>
-		public void EndState()
+		public async UniTask EndStateAsync()
 		{
-			_currentState.OnEndInternal(this);
+			await _currentState.OnEndInternalAsync(this);
 
 			foreach (var state in _states)
 			{
-				state.Value.OnDestroyInternal(this);
+				await state.Value.OnDestroyInternalAsync(this);
 			}
 
 			_states.Clear();
@@ -92,12 +93,12 @@ namespace KONDO.StateMachine
 		/// AddState
 		/// Stateの追加
 		/// </summary>
-		public void AddState(StateBase<T> state)
+		public async UniTask AddStateAsync(StateBase<T> state)
 		{
 			if (_states.TryAdd(state.GetType(), state))
 			{
 				// 追加出来たら初期化
-				state.OnInitializeInternal(this);
+				await state.OnInitializeInternalAsync(this);
 			}
 		}
 
@@ -105,14 +106,14 @@ namespace KONDO.StateMachine
 		/// AddState
 		/// Stateの追加
 		/// </summary>
-		public void AddStates(IEnumerable<StateBase<T>> states)
+		public async UniTask AddStatesAsync(IEnumerable<StateBase<T>> states)
 		{
 			foreach (var state in states)
 			{
 				if (_states.TryAdd(state.GetType(), state))
 				{
 					// 追加出来たら初期化
-					state.OnInitializeInternal(this);
+					await state.OnInitializeInternalAsync(this);
 				}
 			}
 		}
@@ -121,16 +122,16 @@ namespace KONDO.StateMachine
 		/// ChangeState
 		/// Stateの変更
 		/// </summary>
-		internal void ChangeState<TState>() where TState : StateBase<T>
+		internal async UniTask ChangeStateAsync<TState>() where TState : StateBase<T>
 		{
 			// 先に現在のStateを終了させる
-			_currentState.OnEndInternal(this);
+			await _currentState.OnEndInternalAsync(this);
 
 			if (_states.TryGetValue(typeof(TState), out var newState))
 			{
 				// Stateが見つかれば開始する
 				_currentState = newState;
-				_currentState.OnStartInternal(this);
+				await _currentState.OnStartInternalAsync(this);
 			}
 		}
 	}
