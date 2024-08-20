@@ -25,6 +25,9 @@ namespace KONDO.StateMachine
 		// StateÇÃOwner
 		private T _stateOwner;
 
+		// StateÇ™èâä˙âªÇ≥ÇÍÇΩÇ©
+		private bool _isInitializedState = false;
+
 		// ----- Constructor -----
 		public StateMachineBase()
 		{
@@ -44,6 +47,11 @@ namespace KONDO.StateMachine
 		/// </summary>
 		public void Update(float deltaTime)
 		{
+			if (!_isInitializedState)
+			{
+				return;
+			}
+
 			_currentState.OnUpdateInternal(this, deltaTime);
 		}
 
@@ -53,11 +61,15 @@ namespace KONDO.StateMachine
 		/// </summary>
 		public async UniTask StartStateAsync<TState>() where TState : StateBase<T>
 		{
+			_isInitializedState = false;
+
 			if (_states.TryGetValue(typeof(TState), out var newState))
 			{
 				_currentState = newState;
 				await _currentState.OnStartInternalAsync(this);
 			}
+
+			_isInitializedState = true;
 		}
 
 		/// <summary>
@@ -66,11 +78,15 @@ namespace KONDO.StateMachine
 		/// </summary>
 		public async UniTask StartStateAsync(Type stateType)
 		{
+			_isInitializedState = false;
+
 			if (_states.TryGetValue(stateType, out var newState))
 			{
 				_currentState = newState;
 				await _currentState.OnStartInternalAsync(this);
 			}
+
+			_isInitializedState = true;
 		}
 
 		/// <summary>
@@ -124,6 +140,8 @@ namespace KONDO.StateMachine
 		/// </summary>
 		internal async UniTask ChangeStateAsync<TState>() where TState : StateBase<T>
 		{
+			_isInitializedState = false;
+
 			// êÊÇ…åªç›ÇÃStateÇèIóπÇ≥ÇπÇÈ
 			await _currentState.OnEndInternalAsync(this);
 
@@ -133,6 +151,8 @@ namespace KONDO.StateMachine
 				_currentState = newState;
 				await _currentState.OnStartInternalAsync(this);
 			}
+
+			_isInitializedState = true;
 		}
 	}
 }
