@@ -111,11 +111,15 @@ namespace KONDO.StateMachine
 		/// </summary>
 		public async UniTask AddStateAsync(StateBase<T> state)
 		{
+			_isInitializedState = false;
+
 			if (_states.TryAdd(state.GetType(), state))
 			{
 				// ’Ç‰Áo—ˆ‚½‚ç‰Šú‰»
 				await state.OnInitializeInternalAsync(this);
 			}
+
+			_isInitializedState = true;
 		}
 
 		/// <summary>
@@ -124,6 +128,8 @@ namespace KONDO.StateMachine
 		/// </summary>
 		public async UniTask AddStatesAsync(IEnumerable<StateBase<T>> states)
 		{
+			_isInitializedState = false;
+
 			foreach (var state in states)
 			{
 				if (_states.TryAdd(state.GetType(), state))
@@ -132,6 +138,8 @@ namespace KONDO.StateMachine
 					await state.OnInitializeInternalAsync(this);
 				}
 			}
+
+			_isInitializedState = true;
 		}
 
 		/// <summary>
