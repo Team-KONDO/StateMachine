@@ -52,6 +52,11 @@ namespace KONDO.StateMachine
 				return;
 			}
 
+			if (_currentState == null)
+			{
+				return;
+			}
+
 			_currentState.OnUpdateInternal(this, deltaTime);
 		}
 
@@ -95,7 +100,10 @@ namespace KONDO.StateMachine
 		/// </summary>
 		public async UniTask EndStateAsync()
 		{
-			await _currentState.OnEndInternalAsync(this);
+			if (_currentState != null)
+			{
+				await _currentState.OnEndInternalAsync(this);
+			}
 
 			foreach (var state in _states)
 			{
@@ -150,8 +158,11 @@ namespace KONDO.StateMachine
 		{
 			_isInitializedState = false;
 
-			// æ‚ÉŒ»İ‚ÌState‚ğI—¹‚³‚¹‚é
-			await _currentState.OnEndInternalAsync(this);
+			if (_currentState != null)
+			{
+				// æ‚ÉŒ»İ‚ÌState‚ğI—¹‚³‚¹‚é
+				await _currentState.OnEndInternalAsync(this);
+			}
 
 			if (_states.TryGetValue(typeof(TState), out var newState))
 			{
